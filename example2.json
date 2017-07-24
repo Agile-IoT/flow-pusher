@@ -1,0 +1,185 @@
+[
+    {
+        "id": "53ea791f.2e2538",
+        "in": [
+            {
+                "wires": [
+                    {
+                        "id": "1356f3eb.ad03ac"
+                    }
+                ],
+                "x": 135,
+                "y": 112
+            }
+        ],
+        "info": "",
+        "name": "tee",
+        "out": [
+            {
+                "wires": [
+                    {
+                        "id": "53ea791f.2e2538",
+                        "port": 0
+                    }
+                ],
+                "x": 562,
+                "y": 110
+            }
+        ],
+        "type": "subflow"
+    },
+    {
+        "active": true,
+        "complete": "false",
+        "console": "false",
+        "id": "1356f3eb.ad03ac",
+        "name": "",
+        "type": "debug",
+        "wires": [],
+        "x": 356.5,
+        "y": 177,
+        "z": "53ea791f.2e2538"
+    },
+    {
+        "id": "4e40a3a3.1b5c7c",
+        "label": "Copy of Flow 1",
+        "type": "tab"
+    },
+    {
+        "attribute": "",
+        "deviceid": "",
+        "id": "3d69ec5e.035954",
+        "name": "fiware-temperature",
+        "server": "81250062.a1439",
+        "type": "fiware-send-data",
+        "wires": [
+            []
+        ],
+        "x": 493.5,
+        "y": 406,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "crontab": "",
+        "id": "e78c656d.8555c8",
+        "name": "",
+        "once": false,
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "topic": "",
+        "type": "inject",
+        "wires": [
+            [
+                "c09b25fc.9125f8"
+            ]
+        ],
+        "x": 107.5,
+        "y": 417,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "func": "o = { \n    \"deviceID\" : \"agile-temperature\",\n    \"componentID\" : \"t\",\n    \"value\": 25,\n    \"lastUpdate\": msg.payload\n};\nmsg.payload = JSON.stringify(o);\nreturn msg;",
+        "id": "c09b25fc.9125f8",
+        "name": "",
+        "noerr": 0,
+        "outputs": 1,
+        "type": "function",
+        "wires": [
+            [
+                "3d69ec5e.035954"
+            ]
+        ],
+        "x": 279.5,
+        "y": 404,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "crontab": "",
+        "id": "4ac661af.87b0f",
+        "name": "",
+        "once": false,
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "topic": "",
+        "type": "inject",
+        "wires": [
+            [
+                "ac8cc3b0.256ab"
+            ]
+        ],
+        "x": 122.5,
+        "y": 53,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "active": false,
+        "complete": "payload",
+        "console": "false",
+        "id": "e2aeb2f2.0dce2",
+        "name": "",
+        "type": "debug",
+        "wires": [],
+        "x": 506.5,
+        "y": 116,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "func": "msg.timestamp = msg.payload;\nmsg.payload = Math.random();\nreturn msg;",
+        "id": "ac8cc3b0.256ab",
+        "name": "",
+        "noerr": 0,
+        "outputs": 1,
+        "type": "function",
+        "wires": [
+            [
+                "e2aeb2f2.0dce2"
+            ]
+        ],
+        "x": 337.5,
+        "y": 55,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "crontab": "",
+        "id": "7de8923b.9147ec",
+        "name": "",
+        "once": false,
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "topic": "",
+        "type": "inject",
+        "wires": [
+            [
+                "ac8cc3b0.256ab",
+                "f75e0707.965578"
+            ]
+        ],
+        "x": 113.5,
+        "y": 277,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "id": "f75e0707.965578",
+        "type": "subflow:53ea791f.2e2538",
+        "wires": [
+            [
+                "e2aeb2f2.0dce2"
+            ]
+        ],
+        "x": 325.5,
+        "y": 231,
+        "z": "4e40a3a3.1b5c7c"
+    },
+    {
+        "apikey": "4jggokgpepnvsb2uv4s40d59ov",
+        "id": "81250062.a1439",
+        "idas_server_url": "http://localhost:7896/iot/d",
+        "service": "OpenIoT",
+        "servicepath": "/agile",
+        "type": "fiware-config",
+        "z": ""
+    }
+]

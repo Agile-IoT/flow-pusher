@@ -1,0 +1,155 @@
+[{
+	"id": "47821b99.cda0f4",
+	"type": "tab",
+	"label": "Flow 1"
+}, {
+	"id": "4ebca603.56fce8",
+	"type": "tab",
+	"label": "Flow 2"
+}, {
+	"id": "d2014b4b.32c798",
+	"type": "inject",
+	"z": "47821b99.cda0f4",
+	"name": "sensor 2",
+	"topic": "",
+	"payload": "",
+	"payloadType": "date",
+	"repeat": "",
+	"crontab": "",
+	"once": false,
+	"x": 108.5,
+	"y": 272,
+	"wires": [
+		["9a80bc63.5808a"]
+	]
+}, {
+	"id": "e963dc20.03b08",
+	"type": "inject",
+	"z": "47821b99.cda0f4",
+	"name": "sensor 1",
+	"topic": "",
+	"payload": "",
+	"payloadType": "date",
+	"repeat": "",
+	"crontab": "",
+	"once": false,
+	"x": 122.5,
+	"y": 53,
+	"wires": [
+		["ed423ea4.90303"]
+	]
+}, {
+	"id": "9a5fcb03.058fb8",
+	"type": "link in",
+	"z": "4ebca603.56fce8",
+	"name": "",
+	"links": ["6fcdeb84.d76d94"],
+	"x": 179.5,
+	"y": 107,
+	"wires": [
+		["81f4c11c.b941"]
+	]
+}, {
+	"id": "6fcdeb84.d76d94",
+	"type": "link out",
+	"z": "47821b99.cda0f4",
+	"name": "",
+	"links": ["9a5fcb03.058fb8"],
+	"x": 570.5,
+	"y": 54,
+	"wires": []
+}, {
+	"id": "aa00da14.33d758",
+	"type": "link out",
+	"z": "47821b99.cda0f4",
+	"name": "",
+	"links": ["9d9f1143.437d6"],
+	"x": 570.5,
+	"y": 273,
+	"wires": []
+}, {
+	"id": "9d9f1143.437d6",
+	"type": "link in",
+	"z": "4ebca603.56fce8",
+	"name": "",
+	"links": ["aa00da14.33d758"],
+	"x": 179.5,
+	"y": 213,
+	"wires": [
+		["81f4c11c.b941"]
+	]
+}, {
+	"id": "c00487d7.4e8348",
+	"type": "function",
+	"z": "47821b99.cda0f4",
+	"name": "do some work",
+	"func": "\nreturn msg;",
+	"outputs": 1,
+	"noerr": 0,
+	"x": 387.5,
+	"y": 150,
+	"wires": [
+		["ae3025d8.417658"]
+	]
+}, {
+	"id": "ae3025d8.417658",
+	"type": "debug",
+	"z": "47821b99.cda0f4",
+	"name": "output",
+	"active": true,
+	"console": "false",
+	"complete": "payload",
+	"x": 569.5,
+	"y": 151,
+	"wires": []
+}, {
+	"id": "81f4c11c.b941",
+	"type": "function",
+	"z": "4ebca603.56fce8",
+	"name": "do heavy work",
+	"func": "\nreturn msg;",
+	"outputs": 1,
+	"noerr": 0,
+	"x": 349.5,
+	"y": 158,
+	"wires": [
+		["447cb722.0f0a58"]
+	]
+}, {
+	"id": "447cb722.0f0a58",
+	"type": "debug",
+	"z": "4ebca603.56fce8",
+	"name": "",
+	"active": true,
+	"console": "false",
+	"complete": "false",
+	"x": 538.5,
+	"y": 158,
+	"wires": []
+}, {
+	"id": "ed423ea4.90303",
+	"type": "function",
+	"z": "47821b99.cda0f4",
+	"name": "f_sensor1()",
+	"func": "msg.payload = { \"device\": \"sensor1\", \"value\": msg.payload };\nreturn msg;",
+	"outputs": 1,
+	"noerr": 0,
+	"x": 268.5,
+	"y": 53,
+	"wires": [
+		["c00487d7.4e8348", "6fcdeb84.d76d94"]
+	]
+}, {
+	"id": "9a80bc63.5808a",
+	"type": "function",
+	"z": "47821b99.cda0f4",
+	"name": "f_sensor2()",
+	"func": "msg.payload = { \"device\": \"sensor2\", \"value\": msg.payload };\nreturn msg;",
+	"outputs": 1,
+	"noerr": 0,
+	"x": 260.5,
+	"y": 272,
+	"wires": [
+		["c00487d7.4e8348", "aa00da14.33d758"]
+	]
+}]
