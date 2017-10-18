@@ -11,7 +11,7 @@ function prequest(url, options, transform) {
                 method = options["method"] || "GET";
                 err = new Error(
                     `Unexpected status code: ${res.statusCode} on ` +
-                    `${method} ${url} `
+                    `${method} ${url}. Body=${JSON.stringify(body)}`
                 );
                 err.res = res;
             }
@@ -19,7 +19,7 @@ function prequest(url, options, transform) {
                 d(`reject(${err})`);
                 return reject(err);
             }
-
+            d(`request(${url}. Output: ${JSON.stringify(body)}`);
             if (transform === undefined) {
                 resolve(body);
             }
@@ -33,7 +33,7 @@ function prequest(url, options, transform) {
 
 /*
  * Node-RED API abstraction for the secured Node-RED on AGILE.
- * 
+ *
  * Parameters:
  * - baseurl: Node-RED instance address
  * - token: Node-RED token (as returned by authenticate())
@@ -121,7 +121,7 @@ var NodeRedApi = (baseurl, token) => {
             return prequest(url, get_options());
         },
 
-        postflow: (flowtopush, deployment_type) => {
+        postflows: (flowtopush, deployment_type) => {
             var url = `${baseurl}/flows`;
             return prequest(
                 url,
@@ -133,13 +133,24 @@ var NodeRedApi = (baseurl, token) => {
                     }
                 })
             );
+        },
+
+        postflow: (flowtopush) => {
+            var url = `${baseurl}/flow`;
+            return prequest(
+                url,
+                get_options({
+                    "method": "POST",
+                    "json": flowtopush,
+                })
+            );
         }
     }
 }
 
 /*
  * Util functions to work with Node-RED workflows.
- * 
+ *
  * A workflow is the JSON deserialization of the result of calling the Node-RED API.
  */
 var FlowUtils = () => {
@@ -198,7 +209,7 @@ var FlowUtils = () => {
 
         var confignodes = findnodes(
             configtab.configs || [],
-            n => n.type != Types.UI_BASE
+            n => n.type != Types.UI_BASE && n.type != "xively-config"
         );
         return confignodes;
     }
@@ -275,10 +286,10 @@ var FlowUtils = () => {
 }
 
 /*
- * Performs an upload of a tab in a workflow on a source Node-RED instance to a target Node-RED instance. 
- * The source is workflow is modified in such a way that the data entering to that tab is forwarded to 
+ * Performs an upload of a tab in a workflow on a source Node-RED instance to a target Node-RED instance.
+ * The source is workflow is modified in such a way that the data entering to that tab is forwarded to
  * the remote instance.
- * 
+ *
  * Parameters:
  * - sourceapi: NodeRedApi "object" of source Node-RED instance
  * - sourcelabel: label of tab to push to target Node-RED
@@ -344,6 +355,24 @@ var FlowPusher = (sourceapi, sourcelabel, targetapi) => {
         return modifiednodes;
     }
 
+    /*
+     * Calculates nodeset1 - nodeset2
+     * (i.e., each element in nodeset1 but not in nodeset2)
+     */
+    function difference(nodeset1, nodeset2) {
+        nodemap2 = {};
+        nodeset2.forEach(n => {
+            nodemap2[n.id] = n;
+        });
+        var result = [];
+        nodeset1.forEach(n => {
+            if (nodemap2[n.id] === undefined) {
+                result.push(n);
+            }
+        });
+        return result;
+    }
+
     return {
         pushflow: () => {
 
@@ -355,6 +384,7 @@ var FlowPusher = (sourceapi, sourcelabel, targetapi) => {
             var tabflownodes;
             var tabnode;
             var confignodes;
+            var localconfignodes;
             var modifiedflows;
 
             sourceapi.fetchcurrentflows()
@@ -366,20 +396,29 @@ var FlowPusher = (sourceapi, sourcelabel, targetapi) => {
             }).then(sourceflow => {
                 tabflownodes = utils.findnodesintab(sourceflow);
 
-                return sourceapi.fetchglobalflow(sourceurl);
-            }).then(globalflow => {
-                var confignodes = utils.findconfignodes(globalflow);
+                return sourceapi.fetchglobalflow();
+            }).then(localglobalflow => {
+                localconfignodes = utils.findconfignodes(localglobalflow);
 
-                flowtopush = confignodes.concat(tabflownodes);
-                flowtopush.push(tabnode);
+                return targetapi.fetchcurrentflows();
+            }).then(remotenodes => {
 
-                modify_flowtopush(flowtopush);
+                confignodes = difference(localconfignodes, remotenodes || []);
+                var flowtopush = {
+                    "id": tabnode["id"],
+                    "label": sourcelabel,
+                    "nodes": tabflownodes,
+                    "configs": confignodes
+                }
+                d(`configs: ${JSON.stringify(confignodes)}`)
+
+                modify_flowtopush(flowtopush.nodes);
                 modifiedflows = modify_link_out_nodes(currentnodes, tabnode);
 
                 return targetapi.postflow(flowtopush);
             }).then(body => {
 
-                return sourceapi.postflow(modifiedflows, "nodes");
+                return sourceapi.postflows(modifiedflows, "nodes");
             }).then(body => {
 
                 /*  Does nothing */
@@ -391,20 +430,77 @@ var FlowPusher = (sourceapi, sourcelabel, targetapi) => {
     };
 };
 
-var sourceurl = "http://resin.local:1880/red";
-var targeturl = "http://resin.remote:1880";
-var label = "Flow 2";
+function usage_and_exit() {
+    console.log("Usage: flow-pusher -s <url> -t <url> -l <tab label>");
+    process.exit(2);
+}
 
+
+if (process.argv.length == 1) {
+    console.log("A");
+    usage_and_exit();
+}
+
+currentswitch = "";
+var sourceurl = ""; //"http://agile.local:1880/red";
+var targeturl = ""; //"http://agile.remote:1880";
+var label = "";
+for (i = 1; i < process.argv.length; i++) {
+    arg = process.argv[i];
+    switch (currentswitch) {
+        case "-s":
+            sourceurl = arg;
+            currentswitch = "";
+            break;
+        case "-t":
+            targeturl = arg;
+            currentswitch = "";
+            break;
+        case "-l":
+            label = arg;
+            currentswitch = "";
+            break;
+        default:
+            if (currentswitch == "") {
+                if (arg.startsWith("-")) {
+                    currentswitch = arg;
+                }
+                else {
+                    /* ignore */
+                }
+            }
+            else {
+                console.log("B");
+                usage_and_exit();
+            }
+    }
+}
+
+console.log("sourceurl = " + sourceurl);
+console.log("targeturl = " + targeturl);
+console.log("label = " + label);
+
+if (sourceurl == "" || targeturl == "" || label == "") {
+    usage_and_exit();
+}
 
 var sourceapi = NodeRedApi(sourceurl);
-var sourceapi = sourceapi
-    .authenticate("admin", "password")
-    .then(token => {
-        sourceapi = NodeRedApi(sourceurl, token);
-        var targetapi = NodeRedApi(targeturl);
-        var pusher = FlowPusher(sourceapi, label, targetapi);
-        pusher.pushflow();
-});
+var targetapi = NodeRedApi(targeturl);
+
+if (false) {
+    var pusher = FlowPusher(sourceapi, label, targetapi);
+    pusher.pushflow();
+}
+else {
+    sourceapi
+        .authenticate("admin", "password")
+        .then(token => {
+            sourceapi = NodeRedApi(sourceurl, token);
+            var targetapi = NodeRedApi(targeturl);
+            var pusher = FlowPusher(sourceapi, label, targetapi);
+            pusher.pushflow();
+    });
+}
 
 
 module.exports = {

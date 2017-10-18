@@ -1,11 +1,11 @@
 [{
 	"id": "47821b99.cda0f4",
 	"type": "tab",
-	"label": "Flow 1"
+	"label": "Local"
 }, {
 	"id": "4ebca603.56fce8",
 	"type": "tab",
-	"label": "Flow 2"
+	"label": "Remote"
 }, {
 	"id": "d2014b4b.32c798",
 	"type": "inject",
